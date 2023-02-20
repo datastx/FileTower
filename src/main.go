@@ -60,7 +60,6 @@ func GetDirectories(cmd cli.CLI) []string {
 
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
-	// var records []schema.Record
 	var records = make(map[string]schema.Record)
 	interval := time.Duration(secondsSleep) * time.Second
 	for {
@@ -70,7 +69,6 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 				log.Println("Channel closed")
 				return
 			}
-			// TODO: add dedupe logic
 			records = dedupeFiles(val, records)
 		default:
 			if time.Since(resetTime) >= interval {
