@@ -1,7 +1,6 @@
 package tower
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/fsnotify/fsnotify"
@@ -16,22 +15,22 @@ func Run(directories []string, watcher *fsnotify.Watcher) {
 			select {
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					fmt.Println("File created:", event.Name)
+					log.Println("File created:", event.Name)
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					fmt.Println("File modified:", event.Name)
+					log.Println("File modified:", event.Name)
 				}
 				if event.Op&fsnotify.Remove == fsnotify.Remove {
-					fmt.Println("File removed:", event.Name)
+					log.Println("File removed:", event.Name)
 				}
 				if event.Op&fsnotify.Rename == fsnotify.Rename {
-					fmt.Println("File renamed:", event.Name)
+					log.Println("File renamed:", event.Name)
 				}
 				if event.Op&fsnotify.Chmod == fsnotify.Chmod {
-					fmt.Println("File permissions modified:", event.Name)
+					log.Println("File permissions modified:", event.Name)
 				}
 			case err := <-watcher.Errors:
-				log.Println("Error:", err)
+				log.Fatalln("Error:", err)
 			}
 		}
 	}()
