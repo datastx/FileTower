@@ -1,6 +1,10 @@
 package schema
 
+import (
+	"github.com/fsnotify/fsnotify"
+)
+
 type Record struct {
-	Operation string
+	Operation fsnotify.Op
 	FileName  string
 }

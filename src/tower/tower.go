@@ -21,19 +21,19 @@ func Run(directories []string, watcher *fsnotify.Watcher, ch chan<- schema.Recor
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println(new("File created:", event.Name))
-					ch <- schema.Record{Operation: "create", FileName: event.Name}
+					ch <- schema.Record{Operation: fsnotify.Create, FileName: event.Name}
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					log.Println(modified("File modified:", event.Name))
-					ch <- schema.Record{Operation: "modify", FileName: event.Name}
+					ch <- schema.Record{Operation: fsnotify.Write, FileName: event.Name}
 				}
 				if event.Op&fsnotify.Remove == fsnotify.Remove {
 					log.Println(deleted("File removed:", event.Name))
-					ch <- schema.Record{Operation: "remove", FileName: event.Name}
+					ch <- schema.Record{Operation: fsnotify.Remove, FileName: event.Name}
 				}
 				if event.Op&fsnotify.Rename == fsnotify.Rename {
 					log.Println(deleted("File renamed:", event.Name))
-					ch <- schema.Record{Operation: "rename", FileName: event.Name}
+					ch <- schema.Record{Operation: fsnotify.Rename, FileName: event.Name}
 				}
 				// TODO: I think we don't want this
 				// if event.Op&fsnotify.Chmod == fsnotify.Chmod {
