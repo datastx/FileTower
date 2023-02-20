@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/alecthomas/kong"
 	"github.com/datastx/FileTower/src/cli"
@@ -22,9 +21,5 @@ func main() {
 	}
 	defer watcher.Close()
 
-	// Handle errors and run your app
-	if err := tower.Run(cmds, ctx, watcher); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
+	tower.Run(cmds, watcher)
 }
