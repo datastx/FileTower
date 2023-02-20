@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/alecthomas/kong"
 	"github.com/datastx/FileTower/src/cli"
@@ -20,6 +23,31 @@ func main() {
 		ctx.FatalIfErrorf(err)
 	}
 	defer watcher.Close()
+	dirs := GetDirectories(cmds)
 
-	tower.Run(cmds, watcher)
+	tower.Run(dirs, watcher)
+}
+
+func GetDirectories(cmd cli.CLI) []string {
+	var directorys []string
+	if cmd.Directory == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("no directory specified, using current working directory %s", cwd)
+		cmd.Directory = cwd
+	}
+	filepath.Walk(cmd.Directory, func(path string, info os.FileInfo, err error) error {
+		// TODO: add support for symbolic links
+		// TODO: add support for hidden directories
+		if info.IsDir() && filepath.HasPrefix(info.Name(), ".") {
+			return filepath.SkipDir
+		}
+		directorys = append(directorys, path)
+		log.Printf("Added directory %s to watch list", path)
+		return nil
+	})
+
+	return directorys
 }

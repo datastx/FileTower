@@ -3,16 +3,12 @@ package tower
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
-
-	"github.com/datastx/FileTower/src/cli"
 )
 
 // TODO: add support for symbolic links
-func Run(cmd cli.CLI, watcher *fsnotify.Watcher) {
+func Run(directories []string, watcher *fsnotify.Watcher) {
 
 	done := make(chan bool)
 	go func() {
@@ -39,16 +35,9 @@ func Run(cmd cli.CLI, watcher *fsnotify.Watcher) {
 			}
 		}
 	}()
-	// TODO: Change this logic
-	if cmd.Directory == "" {
-		cmd.Directory = "/Users/brianmoore/githib.com/datastx/FileTower/src"
+	for _, directroy := range directories {
+		watcher.Add(directroy)
+		log.Printf("watching %s", directroy)
 	}
-	filepath.Walk(cmd.Directory, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			watcher.Add(path)
-			log.Println("Added:", path)
-		}
-		return nil
-	})
 	<-done
 }
