@@ -44,8 +44,11 @@ func GetDirectories(cmd cli.CLI) []string {
 		if info.IsDir() && filepath.HasPrefix(info.Name(), ".") {
 			return filepath.SkipDir
 		}
-		directorys = append(directorys, path)
-		log.Printf("Added directory %s to watch list", path)
+		if info.IsDir() {
+			directorys = append(directorys, path)
+			log.Printf("Added directory to watch list  `%s`", path)
+		}
+
 		return nil
 	})
 
