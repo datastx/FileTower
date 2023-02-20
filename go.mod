@@ -1,4 +1,4 @@
-module FileTower
+module github.com/datastx/FileTower
 
 go 1.19
 
@@ -9,7 +9,6 @@ require (
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 )

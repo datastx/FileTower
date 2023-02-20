@@ -39,7 +39,7 @@ func TestRun(t *testing.T) {
 	// Start the run function in a goroutine
 	errs := make(chan error, 1)
 	go func(test *testing.T) {
-		if err := run(cli.CLI{Directory: dir}, ctx, watcher); err != nil {
+		if err := Run(cli.CLI{Directory: dir}, ctx, watcher); err != nil {
 			test.Fatalf("run returned error: %v", err)
 			errs <- err
 		}
