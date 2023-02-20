@@ -60,7 +60,8 @@ func GetDirectories(cmd cli.CLI) []string {
 
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
-	var records []schema.Record
+	// var records []schema.Record
+	var records = make(map[string]schema.Record)
 	interval := time.Duration(secondsSleep) * time.Second
 	for {
 		select {
@@ -70,7 +71,7 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 				return
 			}
 			// TODO: add dedupe logic
-			records = append(records, val)
+			records = dedupeFiles(val, records)
 		default:
 			if time.Since(resetTime) >= interval {
 				time.Sleep(interval)
@@ -82,4 +83,15 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 			}
 		}
 	}
+}
+
+// check if a string exists in the map
+func dedupeFiles(record schema.Record, strMap map[string]schema.Record) map[string]schema.Record {
+	if _, ok := strMap[record.FileName]; !ok {
+		fmt.Printf("%q not found, adding to map\n", record.FileName)
+		strMap[record.FileName] = record
+	} else {
+		fmt.Printf("%q already exists in map, skipping\n", record.FileName)
+	}
+	return strMap
 }
