@@ -28,7 +28,7 @@ func main() {
 	dirs := GetDirectories(cmds)
 	ch := make(chan schema.Record)
 	go tower.Run(dirs, watcher, ch)
-	ShipFile(ch)
+	ShipFile(ch, 5)
 }
 
 func GetDirectories(cmd cli.CLI) []string {
@@ -58,9 +58,10 @@ func GetDirectories(cmd cli.CLI) []string {
 	return directorys
 }
 
-func ShipFile(ch <-chan schema.Record) {
+func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
-
+	var records []schema.Record
+	interval := time.Duration(secondsSleep) * time.Second
 	for {
 		select {
 		case val, ok := <-ch:
@@ -68,13 +69,16 @@ func ShipFile(ch <-chan schema.Record) {
 				log.Println("Channel closed")
 				return
 			}
-			log.Printf("Got File %s and operation: %s", val.FileName, val.Operation)
-			// TODO: add support for sending files to a remote server
+			// TODO: add dedupe logic
+			records = append(records, val)
 		default:
-			if time.Since(resetTime) >= 5*time.Second {
-				log.Printf("No files to send, sleeping for 5 seconds")
-				time.Sleep(5 * time.Second)
+			if time.Since(resetTime) >= interval {
+				time.Sleep(interval)
+				for _, record := range records {
+					log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
+				}
 				resetTime = time.Now()
+				records = nil
 			}
 		}
 	}
