@@ -8,6 +8,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/datastx/FileTower/src/cli"
+	"github.com/datastx/FileTower/src/schema"
 	"github.com/datastx/FileTower/src/tower"
 	"github.com/fsnotify/fsnotify"
 )
@@ -24,8 +25,9 @@ func main() {
 	}
 	defer watcher.Close()
 	dirs := GetDirectories(cmds)
-
-	tower.Run(dirs, watcher)
+	ch := make(chan schema.Record)
+	go tower.Run(dirs, watcher, ch)
+	ShipFile(ch)
 }
 
 func GetDirectories(cmd cli.CLI) []string {
@@ -53,4 +55,15 @@ func GetDirectories(cmd cli.CLI) []string {
 	})
 
 	return directorys
+}
+
+func ShipFile(ch <-chan schema.Record) {
+	for {
+		val, ok := <-ch
+		if !ok {
+			fmt.Println("Channel closed")
+			break
+		}
+		log.Printf("Got File %s and operation: %s", val.FileName, val.Operation)
+	}
 }
