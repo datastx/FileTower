@@ -8,6 +8,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/datastx/FileTower/src/cli"
+	"github.com/datastx/FileTower/src/config"
 	"github.com/datastx/FileTower/src/filehash"
 	"github.com/datastx/FileTower/src/schema"
 	"github.com/datastx/FileTower/src/tower"
@@ -17,7 +18,7 @@ import (
 func main() {
 	var cmds cli.CLI
 	ctx := kong.Parse(&cmds)
-
+	config := config.GetConfig(cmds.Config)
 	// Create a new watcher instance
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -28,7 +29,7 @@ func main() {
 	dirs := GetDirectories(cmds)
 	ch := make(chan schema.Record)
 	go tower.Run(dirs, watcher, ch)
-	ShipFile(ch, 5)
+	ShipFile(ch, config.Server.IntervalAmount)
 }
 
 func GetDirectories(cmd cli.CLI) []string {

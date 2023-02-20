@@ -3,6 +3,8 @@ package config
 import (
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 
 	"gopkg.in/yaml.v2"
 )
@@ -16,6 +18,15 @@ type Config struct {
 }
 
 func GetConfig(fileName string) Config {
+	if fileName == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fileName = path.Join(cwd, "config.yml")
+		log.Printf("Using default config %s", cwd)
+
+	}
 	config := Config{}
 
 	// Read YAML file

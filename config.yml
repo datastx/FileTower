@@ -1,4 +1,4 @@
 server:
   cache: true
   interval_time_type: "seconds"
-  interval_amount: 60
+  interval_amount: 5
