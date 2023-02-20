@@ -61,9 +61,10 @@ func ShipFile(ch <-chan schema.Record) {
 	for {
 		val, ok := <-ch
 		if !ok {
-			fmt.Println("Channel closed")
+			log.Println("Channel closed")
 			break
 		}
 		log.Printf("Got File %s and operation: %s", val.FileName, val.Operation)
+		// TODO: add support for sending files to a remote server
 	}
 }
