@@ -2,48 +2,53 @@ package tower
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 
-	"github.com/alecthomas/kong"
 	"github.com/fsnotify/fsnotify"
 
 	"github.com/datastx/FileTower/src/cli"
 )
 
-func Run(cmd cli.CLI, ctx *kong.Context, watcher *fsnotify.Watcher) error {
-	// Add the directory to the watcher's watch list
-	err := watcher.Add(cmd.Directory)
-	if err != nil {
-		fmt.Println("Error adding directory to watcher:", err)
-		ctx.FatalIfErrorf(err)
-	}
+// TODO: add support for symbolic links
+func Run(cmd cli.CLI, watcher *fsnotify.Watcher) {
 
-	// Start an infinite loop to wait for events
-	for {
-		select {
-		case event, ok := <-watcher.Events:
-			if !ok {
-				return nil
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				if event.Op&fsnotify.Create == fsnotify.Create {
+					fmt.Println("File created:", event.Name)
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					fmt.Println("File modified:", event.Name)
+				}
+				if event.Op&fsnotify.Remove == fsnotify.Remove {
+					fmt.Println("File removed:", event.Name)
+				}
+				if event.Op&fsnotify.Rename == fsnotify.Rename {
+					fmt.Println("File renamed:", event.Name)
+				}
+				if event.Op&fsnotify.Chmod == fsnotify.Chmod {
+					fmt.Println("File permissions modified:", event.Name)
+				}
+			case err := <-watcher.Errors:
+				log.Println("Error:", err)
 			}
-
-			// Check the event type
-			switch event.Op {
-			case fsnotify.Create:
-				fmt.Println("File created:", event.Name)
-			case fsnotify.Write:
-				fmt.Println("File modified:", event.Name)
-			case fsnotify.Remove:
-				fmt.Println("File deleted:", event.Name)
-			case fsnotify.Rename:
-				fmt.Println("File renamed:", event.Name)
-			case fsnotify.Chmod:
-				fmt.Println("File permissions changed:", event.Name)
-			}
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				return err
-			}
-			fmt.Println("Error watching directory:", err)
-			ctx.FatalIfErrorf(err)
 		}
+	}()
+	// TODO: Change this logic
+	if cmd.Directory == "" {
+		cmd.Directory = "/Users/brianmoore/githib.com/datastx/FileTower/src"
 	}
+	filepath.Walk(cmd.Directory, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			watcher.Add(path)
+			log.Println("Added:", path)
+		}
+		return nil
+	})
+	<-done
 }
