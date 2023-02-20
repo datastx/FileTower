@@ -71,12 +71,17 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 				log.Println("Channel closed")
 				return
 			}
-			records = dedupeFiles(val, records)
+			// We always want the last action on a file
+			records[val.FileName] = val
 		default:
 			if time.Since(resetTime) >= interval {
 				time.Sleep(interval)
 				// TODO: Add Checksum logic for last write to file
 				for _, record := range records {
+					if record.Operation == fsnotify.Remove || record.Operation == fsnotify.Rename {
+						log.Printf("Removing file %s and operation: %s", record.FileName, record.Operation)
+						continue
+					}
 					fileHash := filehash.GetCheckSum(record.FileName)
 					if _, ok := lastProcessed[fileHash]; !ok {
 						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
@@ -91,15 +96,4 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 			}
 		}
 	}
-}
-
-// check if a string exists in the map
-func dedupeFiles(record schema.Record, strMap map[string]schema.Record) map[string]schema.Record {
-	if _, ok := strMap[record.FileName]; !ok {
-		log.Printf("%q not found, adding to map\n", record.FileName)
-		strMap[record.FileName] = record
-	} else {
-		log.Printf("%q already exists in map, skipping\n", record.FileName)
-	}
-	return strMap
 }
