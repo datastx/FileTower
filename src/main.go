@@ -32,7 +32,7 @@ func main() {
 }
 
 func GetDirectories(cmd cli.CLI) []string {
-	var directorys []string
+	var directories []string
 	if cmd.Directory == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -48,14 +48,14 @@ func GetDirectories(cmd cli.CLI) []string {
 			return filepath.SkipDir
 		}
 		if info.IsDir() {
-			directorys = append(directorys, path)
+			directories = append(directories, path)
 			log.Printf("Added directory to watch list  `%s`", path)
 		}
 
 		return nil
 	})
 
-	return directorys
+	return directories
 }
 
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
