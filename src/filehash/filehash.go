@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func getCheckSum(fileName string) string {
+func GetCheckSum(fileName string) string {
 	// Open the file
 	file, err := os.Open(fileName)
 	if err != nil {

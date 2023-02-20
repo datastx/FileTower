@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/datastx/FileTower/src/cli"
+	"github.com/datastx/FileTower/src/filehash"
 	"github.com/datastx/FileTower/src/schema"
 	"github.com/datastx/FileTower/src/tower"
 	"github.com/fsnotify/fsnotify"
@@ -21,7 +21,7 @@ func main() {
 	// Create a new watcher instance
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		fmt.Println("Error creating watcher:", err)
+		log.Println("Error creating watcher:", err)
 		ctx.FatalIfErrorf(err)
 	}
 	defer watcher.Close()
@@ -61,7 +61,9 @@ func GetDirectories(cmd cli.CLI) []string {
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
 	var records = make(map[string]schema.Record)
+	var lastProcessed = make(map[string]bool)
 	interval := time.Duration(secondsSleep) * time.Second
+
 	for {
 		select {
 		case val, ok := <-ch:
@@ -73,11 +75,19 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 		default:
 			if time.Since(resetTime) >= interval {
 				time.Sleep(interval)
+				// TODO: Add Checksum logic for last write to file
 				for _, record := range records {
-					log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
+					fileHash := filehash.GetCheckSum(record.FileName)
+					if _, ok := lastProcessed[fileHash]; !ok {
+						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
+						lastProcessed[fileHash] = true
+					} else {
+						log.Printf("%q We have already processed that hash\n", record.FileName)
+					}
+
 				}
 				resetTime = time.Now()
-				records = nil
+				records = make(map[string]schema.Record)
 			}
 		}
 	}
@@ -86,10 +96,10 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 // check if a string exists in the map
 func dedupeFiles(record schema.Record, strMap map[string]schema.Record) map[string]schema.Record {
 	if _, ok := strMap[record.FileName]; !ok {
-		fmt.Printf("%q not found, adding to map\n", record.FileName)
+		log.Printf("%q not found, adding to map\n", record.FileName)
 		strMap[record.FileName] = record
 	} else {
-		fmt.Printf("%q already exists in map, skipping\n", record.FileName)
+		log.Printf("%q already exists in map, skipping\n", record.FileName)
 	}
 	return strMap
 }
