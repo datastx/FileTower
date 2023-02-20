@@ -41,6 +41,7 @@ func Run(directories []string, watcher *fsnotify.Watcher, ch chan<- schema.Recor
 				// }
 			case err := <-watcher.Errors:
 				log.Fatalln("Error:", err)
+				close(ch)
 			}
 		}
 	}()
