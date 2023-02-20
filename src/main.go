@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/datastx/FileTower/src/cli"
@@ -58,13 +59,23 @@ func GetDirectories(cmd cli.CLI) []string {
 }
 
 func ShipFile(ch <-chan schema.Record) {
+	resetTime := time.Now()
+
 	for {
-		val, ok := <-ch
-		if !ok {
-			log.Println("Channel closed")
-			break
+		select {
+		case val, ok := <-ch:
+			if !ok {
+				log.Println("Channel closed")
+				return
+			}
+			log.Printf("Got File %s and operation: %s", val.FileName, val.Operation)
+			// TODO: add support for sending files to a remote server
+		default:
+			if time.Since(resetTime) >= 5*time.Second {
+				log.Printf("No files to send, sleeping for 5 seconds")
+				time.Sleep(5 * time.Second)
+				resetTime = time.Now()
+			}
 		}
-		log.Printf("Got File %s and operation: %s", val.FileName, val.Operation)
-		// TODO: add support for sending files to a remote server
 	}
 }
