@@ -83,17 +83,18 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 						log.Printf("Removing file %s and operation: %s", record.FileName, record.Operation)
 						continue
 					}
-
-					if fnHash, ok := lastProcessed[record.FileName]; !ok {
-						fileHash := filehash.GetCheckSum(record.FileName)
-						if fnHash != fileHash {
-							log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
-							lastProcessed[record.FileName] = fileHash
-							continue
-						}
-					} else {
-						log.Printf("%q We have already processed that hash\n", record.FileName)
+					fileHash := filehash.GetCheckSum(record.FileName)
+					if prevHash, ok := lastProcessed[record.FileName]; !ok {
+						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
+						lastProcessed[record.FileName] = fileHash
+						continue
+					} else if prevHash != fileHash {
+						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
+						lastProcessed[record.FileName] = fileHash
+						continue
 					}
+
+					log.Printf("File %s has not changed, skipping", record.FileName)
 
 				}
 				resetTime = time.Now()
@@ -102,5 +103,3 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 		}
 	}
 }
-
-//
