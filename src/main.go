@@ -16,6 +16,7 @@ import (
 )
 
 // TODO: discuss front loading cached files?
+// TODO: crash if branch from git changes?
 
 func main() {
 	var cmds cli.CLI
@@ -63,7 +64,10 @@ func GetDirectories(cmd cli.CLI) []string {
 
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
+	// TODO: Add locks on access to the maps?...records and lastProcessed
+	// Stores the File Name and the last action we saw and gets reset every interval
 	var records = make(map[string]schema.Record)
+	// Stores the File Name and the last hash we sent
 	var lastProcessed = make(map[string]string)
 	interval := time.Duration(secondsSleep) * time.Second
 
@@ -80,8 +84,9 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 			if time.Since(resetTime) >= interval {
 				time.Sleep(interval)
 				for _, record := range records {
-					// This protects against the case where a file is deleted and then recreated
-					// since we read the hash in when we make the filehash
+					// TODO: parallelize this?
+					// This protects against the case where we don't have a file to read
+					// a current hash for
 					if record.Operation == fsnotify.Remove || record.Operation == fsnotify.Rename {
 						log.Printf("Removing file %s and operation: %s", record.FileName, record.Operation)
 						continue
