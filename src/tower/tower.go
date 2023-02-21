@@ -35,10 +35,11 @@ func Run(directories []string, watcher *fsnotify.Watcher, ch chan<- schema.Recor
 					log.Println(deleted("File renamed:", event.Name))
 					ch <- schema.Record{Operation: fsnotify.Rename, FileName: event.Name}
 				}
-				// TODO: I think we don't want this
-				// if event.Op&fsnotify.Chmod == fsnotify.Chmod {
-				// 	log.Println(modified("File permissions modified:", event.Name))
-				// }
+				// TODO: I don't think care about this
+				if event.Op&fsnotify.Chmod == fsnotify.Chmod {
+					log.Println(modified("File permissions modified:", event.Name))
+					ch <- schema.Record{Operation: fsnotify.Chmod, FileName: event.Name}
+				}
 			case err := <-watcher.Errors:
 				log.Fatalln("Error:", err)
 				close(ch)

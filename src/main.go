@@ -73,13 +73,13 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 
 	for {
 		select {
-		case val, ok := <-ch:
+		case rec, ok := <-ch:
 			if !ok {
 				log.Println("Channel closed")
 				return
 			}
 			// We always want the last action on a file
-			records[val.FileName] = val
+			records[rec.FileName] = rec
 		default:
 			if time.Since(resetTime) >= interval {
 				time.Sleep(interval)
