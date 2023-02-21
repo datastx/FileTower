@@ -64,7 +64,7 @@ func GetDirectories(cmd cli.CLI) []string {
 
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
-	// TODO: Add locks on access to the maps?...records and lastProcessed
+	// TODO: Add locks on access to the maps?...records and lastProcessed. There may be a race condition in here
 	// Stores the File Name and the last action we saw and gets reset every interval
 	var records = make(map[string]schema.Record)
 	// Stores the File Name and the last hash we sent
