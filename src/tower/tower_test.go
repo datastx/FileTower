@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/datastx/FileTower/src/schema"
+	"github.com/datastx/FileTower/src/schemas"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -23,7 +23,7 @@ func TestRun(t *testing.T) {
 	}
 	defer watcher.Close()
 
-	ch := make(chan schema.Record)
+	ch := make(chan schemas.Record)
 
 	done := make(chan bool)
 	go func() {
@@ -38,7 +38,7 @@ func TestRun(t *testing.T) {
 	}
 
 	// wait for events to be processed
-	expected := []schema.Record{
+	expected := []schemas.Record{
 		{Operation: fsnotify.Create, FileName: testFile},
 	}
 	for i := 0; i < len(expected); i++ {
@@ -56,7 +56,7 @@ func TestRun(t *testing.T) {
 	}
 
 	// wait for events to be processed
-	expected = append(expected, schema.Record{Operation: fsnotify.Write, FileName: testFile})
+	expected = append(expected, schemas.Record{Operation: fsnotify.Write, FileName: testFile})
 	for i := 1; i < len(expected); i++ {
 		select {
 		case actual := <-ch:
@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 	}
 
 	// wait for events to be processed
-	expected = append(expected, schema.Record{Operation: fsnotify.Remove, FileName: testFile})
+	expected = append(expected, schemas.Record{Operation: fsnotify.Remove, FileName: testFile})
 	for i := 2; i < len(expected); i++ {
 		select {
 		case actual := <-ch:

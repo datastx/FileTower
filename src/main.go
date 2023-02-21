@@ -10,13 +10,14 @@ import (
 	"github.com/datastx/FileTower/src/cli"
 	"github.com/datastx/FileTower/src/config"
 	"github.com/datastx/FileTower/src/filehash"
-	"github.com/datastx/FileTower/src/schema"
+	"github.com/datastx/FileTower/src/schemas"
 	"github.com/datastx/FileTower/src/tower"
 	"github.com/fsnotify/fsnotify"
 )
 
 // TODO: discuss front loading cached files?
 // TODO: crash if branch from git changes?
+// TODO: Breaks when I rename a directory
 
 func main() {
 	var cmds cli.CLI
@@ -30,7 +31,7 @@ func main() {
 	}
 	defer watcher.Close()
 	dirs := GetDirectories(cmds)
-	ch := make(chan schema.Record)
+	ch := make(chan schemas.Record)
 	go tower.Run(dirs, watcher, ch)
 	ShipFile(ch, config.Server.IntervalAmount)
 }
@@ -62,11 +63,11 @@ func GetDirectories(cmd cli.CLI) []string {
 	return directories
 }
 
-func ShipFile(ch <-chan schema.Record, secondsSleep int) {
+func ShipFile(ch <-chan schemas.Record, secondsSleep int) {
 	resetTime := time.Now()
 	// TODO: Add locks on access to the maps?...records and lastProcessed. There may be a race condition in here
 	// Stores the File Name and the last action we saw and gets reset every interval
-	var records = make(map[string]schema.Record)
+	var records = make(map[string]schemas.Record)
 	// Stores the File Name and the last hash we sent
 	var lastProcessed = make(map[string]string)
 	interval := time.Duration(secondsSleep) * time.Second
@@ -105,7 +106,7 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 
 				}
 				resetTime = time.Now()
-				records = make(map[string]schema.Record)
+				records = make(map[string]schemas.Record)
 			}
 		}
 	}
