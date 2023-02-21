@@ -15,6 +15,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+// TODO: discuss front loading cached files?
+
 func main() {
 	var cmds cli.CLI
 	ctx := kong.Parse(&cmds)
@@ -77,23 +79,23 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 		default:
 			if time.Since(resetTime) >= interval {
 				time.Sleep(interval)
-				// TODO: Add Checksum logic for last write to file
 				for _, record := range records {
+					// This protects against the case where a file is deleted and then recreated
+					// since we read the hash in when we make the filehash
 					if record.Operation == fsnotify.Remove || record.Operation == fsnotify.Rename {
 						log.Printf("Removing file %s and operation: %s", record.FileName, record.Operation)
 						continue
 					}
-					fileHash := filehash.GetCheckSum(record.FileName)
+					currentHash := filehash.GetCheckSum(record.FileName)
 					if prevHash, ok := lastProcessed[record.FileName]; !ok {
-						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
-						lastProcessed[record.FileName] = fileHash
+						log.Printf("Sending File %s we haven't sent before on operation %s", record.FileName, record.Operation)
+						lastProcessed[record.FileName] = currentHash
 						continue
-					} else if prevHash != fileHash {
-						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
-						lastProcessed[record.FileName] = fileHash
+					} else if prevHash != currentHash {
+						log.Printf("Sending File %s we have seen before but has been modified on operation %s", record.FileName, record.Operation)
+						lastProcessed[record.FileName] = currentHash
 						continue
 					}
-
 					log.Printf("File %s has not changed, skipping", record.FileName)
 
 				}
