@@ -62,7 +62,7 @@ func GetDirectories(cmd cli.CLI) []string {
 func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 	resetTime := time.Now()
 	var records = make(map[string]schema.Record)
-	var lastProcessed = make(map[string]bool)
+	var lastProcessed = make(map[string]string)
 	interval := time.Duration(secondsSleep) * time.Second
 
 	for {
@@ -83,10 +83,14 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 						log.Printf("Removing file %s and operation: %s", record.FileName, record.Operation)
 						continue
 					}
-					fileHash := filehash.GetCheckSum(record.FileName)
-					if _, ok := lastProcessed[fileHash]; !ok {
-						log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
-						lastProcessed[fileHash] = true
+
+					if fnHash, ok := lastProcessed[record.FileName]; !ok {
+						fileHash := filehash.GetCheckSum(record.FileName)
+						if fnHash != fileHash {
+							log.Printf("Sending file %s and operation: %s", record.FileName, record.Operation)
+							lastProcessed[record.FileName] = fileHash
+							continue
+						}
 					} else {
 						log.Printf("%q We have already processed that hash\n", record.FileName)
 					}
@@ -98,3 +102,5 @@ func ShipFile(ch <-chan schema.Record, secondsSleep int) {
 		}
 	}
 }
+
+//
